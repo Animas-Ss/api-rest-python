@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PFO 2 — API REST & Sistema de Gestión de Tareas</title>
+    <meta name="description" content="Documentación oficial y demostración interactiva del PFO 2: API REST con Flask, autenticación segura con Werkzeug, persistencia en SQLite y cliente de consola.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --card-bg: rgba(17, 24, 39, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-primary: #6366f1;
+            --accent-secondary: #a855f7;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --text-dim: #6b7280;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+                radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-weight: 800;
+            font-size: 1.25rem;
+            background: linear-gradient(90deg, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .hero {
+            padding: 5rem 2rem 3rem;
+            max-width: 1100px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1.2rem;
+            background: rgba(99, 102, 241, 0.12);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 9999px;
+            color: #818cf8;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 1.2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            max-width: 750px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .tech-tags {
+            display: flex;
+            justify-content: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .tech-tag {
+            background: rgba(31, 41, 55, 0.8);
+            border: 1px solid var(--card-border);
+            padding: 0.4rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-cyan);
+        }
+
+        .section {
+            max-width: 1100px;
+            margin: 4rem auto;
+            padding: 0 2rem;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+            margin-bottom: 2rem;
+        }
+
+        /* Endpoints Table */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        th {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+
+        .method {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        .method-post { background: rgba(168, 85, 247, 0.2); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+        .method-get { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            color: #f472b6;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        /* Conceptual Q&A */
+        .qa-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .qa-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2.2rem; }
+        }
+
+        .qa-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.75rem;
+        }
+
+        .qa-card h3 {
+            font-size: 1.25rem;
+            color: #818cf8;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .qa-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .qa-card ul {
+            padding-left: 1.2rem;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .qa-card li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Screenshots Grid */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .gallery-card {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .gallery-info {
+            padding: 1rem 1.2rem;
+        }
+
+        .gallery-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .gallery-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Interactive Simulator */
+        .sim-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .sim-tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .sim-tab.active {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+        }
+
+        .sim-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .sim-box { grid-template-columns: 1fr; }
+        }
+
+        .code-block {
+            background: #030712;
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: #e2e8f0;
+            white-space: pre-wrap;
+            height: 220px;
+            overflow-y: auto;
+        }
+
+        footer {
+            text-align: center;
+            padding: 3rem 2rem;
+            border-top: 1px solid var(--card-border);
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="brand">
+            ⚡ PFO 2 API REST
+        </div>
+        <ul class="nav-links">
+            <li><a href="#endpoints">Endpoints</a></li>
+            <li><a href="#conceptos">Conceptos</a></li>
+            <li><a href="#capturas">Capturas</a></li>
+            <li><a href="#simulador">Simulador</a></li>
+            <li><a href="#ejecucion">Instrucciones</a></li>
+        </ul>
+    </nav>
+
+    <header class="hero">
+        <div class="badge-pill">
+            Trabajo Práctico Obligatorio 2
+        </div>
+        <h1>Sistema de Gestión de Tareas<br>API REST & SQLite</h1>
+        <p>Desarrollo integral de una API RESTful construida con Flask, autenticación segura de usuarios mediante hashing criptográfico con Werkzeug, almacenamiento persistente en SQLite y cliente interactivo en consola.</p>
+        
+        <div class="tech-tags">
+            <span class="tech-tag">Python 3.14</span>
+            <span class="tech-tag">Flask 3.1</span>
+            <span class="tech-tag">SQLite3</span>
+            <span class="tech-tag">Werkzeug Security</span>
+            <span class="tech-tag">Pytest 9.1</span>
+        </div>
+    </header>
+
+    <main>
+
+        <!-- Endpoints -->
+        <section id="endpoints" class="section">
+            <div class="section-title">📌 Endpoints de la API</div>
+            <div class="section-subtitle">Especificación detallada de las rutas HTTP implementadas</div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Método</th>
+                                <th>Endpoint</th>
+                                <th>Estructura Request (JSON)</th>
+                                <th>Código HTTP</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="method method-post">POST</span></td>
+                                <td><code>/registro</code></td>
+                                <td><code>{"usuario": "nom", "contraseña": "123"}</code></td>
+                                <td><strong>201 Created</strong> / 400 / 409</td>
+                                <td>Registra un nuevo usuario en la base de datos SQLite guardando la contraseña hasheada.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="method method-post">POST</span></td>
+                                <td><code>/login</code></td>
+                                <td><code>{"usuario": "nom", "contraseña": "123"}</code></td>
+                                <td><strong>200 OK</strong> / 400 / 401</td>
+                                <td>Verifica credenciales contra el hash almacenado y autoriza el acceso.</td>
+                            </tr>
+                            <tr>
+                                <td><span class="method method-get">GET</span></td>
+                                <td><code>/tareas</code></td>
+                                <td>N/A</td>
+                                <td><strong>200 OK</strong></td>
+                                <td>Retorna una página HTML interactiva de bienvenida al módulo de tareas.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Respuestas Conceptuales -->
+        <section id="conceptos" class="section">
+            <div class="section-title">🧠 Respuestas Conceptuales</div>
+            <div class="section-subtitle">Fundamentos teóricos aplicados en la arquitectura del proyecto</div>
+
+            <div class="qa-grid">
+                <div class="qa-card">
+                    <h3>1. ¿Por qué hashear contraseñas?</h3>
+                    <p>El almacenamiento de contraseñas en <strong>texto plano</strong> representa una de las vulnerabilidades más graves de seguridad. Si la base de datos resulta comprometida por una filtración o ataque, todas las credenciales de los usuarios quedarían expuestas instantáneamente.</p>
+                    <ul>
+                        <li><strong>Irreversibilidad:</strong> Las funciones hash unidireccionales (como <code>scrypt</code> o <code>pbkdf2</code>) transforman la contraseña en una cadena de caracteres fija de la cual no se puede recuperar el texto original.</li>
+                        <li><strong>Salt Integrado:</strong> Previenen ataques de diccionario y tablas arcoíris (Rainbow Tables) al incluir sal aleatoria en cada hash.</li>
+                        <li><strong>Protección del usuario:</strong> En la API, el servidor únicamente compara el hash generado en el login contra el hash almacenado, manteniendo el secreto intacto.</li>
+                    </ul>
+                </div>
+
+                <div class="qa-card">
+                    <h3>2. Ventajas de usar SQLite en este proyecto</h3>
+                    <p>SQLite es un motor de base de datos relacional ligero, autónomo y sin servidor (serverless), ideal para el ámbito del PFO 2:</p>
+                    <ul>
+                        <li><strong>Cero Configuración:</strong> No requiere la instalación ni administración de un servicio de base de datos externo (como PostgreSQL o MySQL).</li>
+                        <li><strong>Persistencia de Archivo Único:</strong> Toda la base de datos reside en el archivo <code>database/tareas.db</code>, garantizando portabilidad directa.</li>
+                        <li><strong>Rendimiento & ACIDs completos:</strong> Cumple plenamente las propiedades ACID y ofrece respuestas ultrarrápidas para aplicaciones de consumo directo o prototipado API.</li>
+                        <li><strong>Integración Nativa:</strong> Incluido por defecto en la biblioteca estándar de Python (<code>import sqlite3</code>).</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Interactive Simulator -->
+        <section id="simulador" class="section">
+            <div class="section-title">💻 Simulador Interactivo de API</div>
+            <div class="section-subtitle">Prueba las peticiones en vivo hacia el servidor</div>
+
+            <div class="card">
+                <div class="sim-tabs">
+                    <button class="sim-tab active" onclick="setSim('registro')">POST /registro</button>
+                    <button class="sim-tab" onclick="setSim('login')">POST /login</button>
+                    <button class="sim-tab" onclick="setSim('tareas')">GET /tareas</button>
+                </div>
+
+                <div class="sim-box">
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">Petición (Payload):</div>
+                        <div id="sim-req" class="code-block"></div>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-muted);">Respuesta HTTP Esperada:</div>
+                        <div id="sim-res" class="code-block"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Capturas de pantalla -->
+        <section id="capturas" class="section">
+            <div class="section-title">📸 Capturas de Pruebas Exitosas</div>
+            <div class="section-subtitle">Evidencia del funcionamiento del servidor, cliente, base de datos y tests</div>
+
+            <div class="gallery-grid">
+                <div class="gallery-card">
+                    <img src="screenshots/01_servidor_flask.png" alt="Servidor Flask">
+                    <div class="gallery-info">
+                        <div class="gallery-title">1. Servidor Flask en Ejecución</div>
+                        <div class="gallery-desc">Inicio del servidor HTTP en el puerto 5000 procesando peticiones.</div>
+                    </div>
+                </div>
+
+                <div class="gallery-card">
+                    <img src="screenshots/02_registro_exitoso.png" alt="Registro Exitoso">
+                    <div class="gallery-info">
+                        <div class="gallery-title">2. Endpoint POST /registro</div>
+                        <div class="gallery-desc">Respuesta 201 Created al registrar un nuevo usuario con éxito.</div>
+                    </div>
+                </div>
+
+                <div class="gallery-card">
+                    <img src="screenshots/03_login_exitoso.png" alt="Login Exitoso">
+                    <div class="gallery-info">
+                        <div class="gallery-title">3. Endpoint POST /login (200 OK)</div>
+                        <div class="gallery-desc">Verificación correcta de credenciales contra hash en la base de datos.</div>
+                    </div>
+                </div>
+
+                <div class="gallery-card">
+                    <img src="screenshots/04_login_incorrecto.png" alt="Login Incorrecto">
+                    <div class="gallery-info">
+                        <div class="gallery-title">4. POST /login (401 Unauthorized)</div>
+                        <div class="gallery-desc">Rechazo seguro de solicitudes con contraseña o usuario erróneo.</div>
+                    </div>
+                </div>
+
+                <div class="gallery-card">
+                    <img src="screenshots/05_tareas_html.png" alt="GET /tareas HTML">
+                    <div class="gallery-info">
+                        <div class="gallery-title">5. Endpoint GET /tareas</div>
+                        <div class="gallery-desc">Respuesta HTTP 200 con la plantilla HTML de bienvenida renderizada.</div>
+                    </div>
+                </div>
+
+                <div class="gallery-card">
+                    <img src="screenshots/06_cliente_consola.png" alt="Cliente Consola">
+                    <div class="gallery-info">
+                        <div class="gallery-title">6. Cliente Interactivo en Consola</div>
+                        <div class="gallery-desc">Menú ejecutable en terminal que interactúa remotamente con la API.</div>
+                    </div>
+                </div>
+
+                <div class="gallery-card">
+                    <img src="screenshots/07_tests_pytest.png" alt="Tests Pytest">
+                    <div class="gallery-info">
+                        <div class="gallery-title">7. Tests Automatizados (16/16 Passed)</div>
+                        <div class="gallery-desc">Ejecución del suite pytest validando API, Auth y Base de Datos.</div>
+                    </div>
+                </div>
+
+                <div class="gallery-card">
+                    <img src="screenshots/08_sqlite_db_hashes.png" alt="Hashes en SQLite">
+                    <div class="gallery-info">
+                        <div class="gallery-title">8. Verificación de Hashes en SQLite</div>
+                        <div class="gallery-desc">Inspección de la tabla 'usuarios' confirmando contraseñas protegidas.</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Instrucciones de Ejecución -->
+        <section id="ejecucion" class="section">
+            <div class="section-title">🚀 Instrucciones para Ejecutar el Proyecto</div>
+            <div class="section-subtitle">Pasos para desplegar el servidor, cliente y ejecutar tests</div>
+
+            <div class="card">
+                <h3 style="color: #818cf8; margin-bottom: 1rem;">1. Clonar el repositorio e instalar dependencias</h3>
+                <div class="code-block" style="height: auto; margin-bottom: 1.5rem;">
+git clone https://github.com/tu-usuario/api-rest-python.git
+cd api-rest-python
+
+# Crear entorno virtual y activarlo
+python -m venv .venv
+source .venv/bin/activate   # En Linux/Mac
+.venv\Scripts\activate      # En Windows
+
+# Instalar dependencias
+pip install -r requirements.txt</div>
+
+                <h3 style="color: #818cf8; margin-bottom: 1rem;">2. Iniciar el Servidor Flask</h3>
+                <div class="code-block" style="height: auto; margin-bottom: 1.5rem;">
+python servidor.py</div>
+
+                <h3 style="color: #818cf8; margin-bottom: 1rem;">3. Ejecutar el Cliente en Consola (en otra terminal)</h3>
+                <div class="code-block" style="height: auto; margin-bottom: 1.5rem;">
+python client/cliente.py</div>
+
+                <h3 style="color: #818cf8; margin-bottom: 1rem;">4. Ejecutar el suite de pruebas automatizadas</h3>
+                <div class="code-block" style="height: auto;">
+pytest -v</div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <p>PFO 2 — Sistema de Gestión de Tareas con API REST y Base de Datos SQLite</p>
+        <p style="margin-top: 0.5rem;">Alojado en GitHub Pages • Desarrollado con Flask & Werkzeug</p>
+    </footer>
+
+    <script>
+        const simData = {
+            registro: {
+                req: `POST /registro HTTP/1.1\nHost: 127.0.0.1:5000\nContent-Type: application/json\n\n{\n  "usuario": "maria_dev",\n  "contraseña": "ClaveSegura2026"\n}`,
+                res: `HTTP/1.1 201 Created\nContent-Type: application/json\n\n{\n  "mensaje": "Usuario registrado exitosamente",\n  "usuario": "maria_dev"\n}`
+            },
+            login: {
+                req: `POST /login HTTP/1.1\nHost: 127.0.0.1:5000\nContent-Type: application/json\n\n{\n  "usuario": "maria_dev",\n  "contraseña": "ClaveSegura2026"\n}`,
+                res: `HTTP/1.1 200 OK\nContent-Type: application/json\n\n{\n  "mensaje": "Inicio de sesión exitoso",\n  "usuario": "maria_dev"\n}`
+            },
+            tareas: {
+                req: `GET /tareas HTTP/1.1\nHost: 127.0.0.1:5000\nAccept: text/html\n`,
+                res: `HTTP/1.1 200 OK\nContent-Type: text/html; charset=utf-8\n\n<!DOCTYPE html>\n<html lang="es">\n<head><title>Bienvenida - Sistema de Gestión de Tareas</title></head>\n<body>\n  <h1>¡Bienvenido al Sistema de Gestión de Tareas!</h1>\n</body>\n</html>`
+            }
+        };
+
+        function setSim(key) {
+            document.querySelectorAll('.sim-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('sim-req').textContent = simData[key].req;
+            document.getElementById('sim-res').textContent = simData[key].res;
+        }
+
+        setSim('registro');
+    </script>
+</body>
+</html>
